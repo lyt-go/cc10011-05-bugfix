@@ -1,4 +1,5 @@
-"""实时指标接口：维护指标定义，覆盖提交定义评审、上线指标、下线指标等动作。"""
+"""实时指标接口：维护指标定义，覆盖提交定义评审、上线指标、下线指标等动作，
+以及指标窗口聚合记录集的写入与查询。"""
 from __future__ import annotations
 
 from typing import Any
@@ -30,6 +31,13 @@ def list_entries(
     return PageResult(items=items, total=total, page=page, size=size)
 
 
+@router.get("/export")
+def export_entries() -> dict[str, Any]:
+    """导出实时指标清单：返回当前过滤条件下的全量数据。"""
+    items, total = service.list_entries(page=1, size=10000)
+    return {"module": "realtimemetric", "total": total, "items": items}
+
+
 @router.get("/{entry_id}", response_model=dict)
 def get_entry(entry_id: int) -> dict:
     """读取单条指标定义明细；不存在时给出可读的错误说明。"""
@@ -51,15 +59,25 @@ def create_entry(payload: EntryPayload) -> ActionResult:
 @router.post("/{entry_id}/actions", response_model=ActionResult)
 def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
     """对单条指标定义执行提交定义评审、上线指标、下线指标；不允许的动作会被拦下并说明原因。"""
-    action = str(payload.values.get("action") or "").strip()
-    entry, message = service.run_action(entry_id, action)
+    entry, message = service.run_action(entry_id, payload.action_name())
     if entry is None:
         return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message=message, entry=entry)
 
 
-@router.get("/export")
-def export_entries() -> dict[str, Any]:
-    """导出实时指标清单：返回当前过滤条件下的全量数据。"""
-    items, total = service.list_entries(page=1, size=10000)
-    return {"module": "realtimemetric", "total": total, "items": items}
+@router.post("/{entry_id}/windows", response_model=ActionResult)
+def record_window(entry_id: int, payload: EntryPayload) -> ActionResult:
+    """别的页面产生的实时指标结果同步写入指标窗口聚合记录集。"""
+    record, message = service.record_window_result(entry_id, payload.values)
+    if record is None:
+        return ActionResult(ok=False, message=message)
+    return ActionResult(ok=True, message=message, entry=record)
+
+
+@router.get("/{entry_id}/windows")
+def list_windows(entry_id: int) -> dict[str, Any]:
+    """查询单条指标的窗口聚合记录，核对调用链上的数据缺口。"""
+    if service.get_entry(entry_id) is None:
+        raise HTTPException(status_code=404, detail=f"指标定义 {entry_id} 不存在或已归档")
+    records = service.list_window_records(entry_id)
+    return {"module": "metricwindow", "total": len(records), "items": records}

@@ -33,3 +33,15 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .link { border: none; background: none; color: var(--brand); cursor: pointer; padding: 0; }
 .page-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
 .error-text { color: #b42318; }
+.notice-text { color: #067647; }
+.form-panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.form-grid label span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.form-grid input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.form-actions { display: flex; gap: 8px; margin: 10px 0; }
+.panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 12px; }
+.panel .data-table { margin-bottom: 12px; }
+.panel-title { margin: 0 0 8px; font-size: 14px; }
+.hint-text { color: var(--muted); font-size: 12px; margin: 4px 0; }
+.chip { display: inline-block; background: #eef4ff; color: var(--brand); border-radius: 10px; padding: 2px 8px; font-size: 12px; margin-right: 6px; }
+.tag-warn { color: #b42318; }

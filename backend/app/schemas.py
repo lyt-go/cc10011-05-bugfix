@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -22,10 +22,22 @@ class ActionResult(BaseModel):
 
 
 class EntryPayload(BaseModel):
-    """登记或修改一条业务记录时提交的字段集合。"""
+    """登记或修改一条业务记录时提交的字段集合。
+
+    extra="allow"：兼容把 action 放在顶层的旧调用方式，避免动作被静默丢弃。
+    """
+
+    model_config = ConfigDict(extra="allow")
 
     values: dict[str, Any] = Field(default_factory=dict)
     remark: str | None = None
+
+    def action_name(self) -> str:
+        """取出动作名：优先 values.action，其次顶层 action。"""
+        action = self.values.get("action")
+        if not action and self.model_extra:
+            action = self.model_extra.get("action")
+        return str(action or "").strip()
 
 
 
